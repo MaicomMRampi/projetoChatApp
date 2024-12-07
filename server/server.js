@@ -15,7 +15,7 @@ module.exports.listen = (server) => {
 
         // Exemplo de evento de mensagem
         socket.on('chat_message', (data) => {
-            console.log('Mensagem recebida: ', data);
+            console.log('Mensagem recebida : ', data);
             io.emit('chat_message', data); // Emite a mensagem para todos os clientes
         });
 

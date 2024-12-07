@@ -201,8 +201,8 @@ export default function Chat() {
   }, [tokenUsuario]);
 
   return (
-    <div className="w-full h-screen bg-gray-100">
-      <div className="w-full h-[500px] bg-green-400 p-4">
+    <div className="w-full h-screen bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500">
+      <div className="w-full h-full p-4">
         <div className="grid grid-cols-12 gap-3">
           {/* Lado esquerdo - Lista de usuários */}
           <div className="col-span-3 bg-white rounded-lg shadow-lg p-4">

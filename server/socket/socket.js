@@ -11,6 +11,7 @@ const initSocket = (io) => {
 
             // Salvar mensagem no banco de dados
             const newMessage = new Message({ sender, content, recipientId });
+            console.log("dalvando aqyui trhio")
             await newMessage.save();
 
             // Enviar a mensagem para o destinatário
