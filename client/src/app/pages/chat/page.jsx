@@ -13,7 +13,7 @@ const formatDateTime = (date) => {
 };
 
 export default function Chat() {
-  const { tokenUsuario, setToenUsuario } = sessaoUsuario();
+  const { tokenUsuario, setTokenUsuario } = sessaoUsuario();
   const [users, setUsers] = useState([]); // Lista de usuários
   const [onlineUsers, setOnlineUsers] = useState({}); // Status online/offline dos usuários
   const [userSelected, setUserSelected] = useState(null);
@@ -34,7 +34,7 @@ export default function Chat() {
     const response = await api.put("/logout");
     if (response.status === 200) {
       // Limpar o cookie de sessão
-      setToenUsuario(null);
+      setTokenUsuario(null);
       Cookies.remove("connect.sid");
       router.push("/pages/login");
       console.log("Logout bem-sucedido");
