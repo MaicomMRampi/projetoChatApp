@@ -1,24 +1,60 @@
 "use client";
 import { Avatar, Input, Button } from "@nextui-org/react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { RiTelegramLine } from "react-icons/ri";
 import sessaoUsuario from "../../../components/hooks/sessaoContext";
 import socket from "../../utils/socket";
-
+import { api } from "../../../lib/api";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 const formatDateTime = (date) => {
   const options = { hour: "2-digit", minute: "2-digit" };
   return new Date(date).toLocaleTimeString("pt-BR", options);
 };
 
 export default function Chat() {
-  const { tokenUsuario } = sessaoUsuario();
-  const [lastMessages, setLastMessages] = useState({}); // Última mensagem por usuário
+  const { tokenUsuario, setToenUsuario } = sessaoUsuario();
   const [users, setUsers] = useState([]); // Lista de usuários
   const [onlineUsers, setOnlineUsers] = useState({}); // Status online/offline dos usuários
   const [userSelected, setUserSelected] = useState(null);
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([]); // Lista de mensagens
   const [formattedMessages, setFormattedMessages] = useState([]);
+  const router = useRouter();
+  if (!tokenUsuario) {
+    setTimeout(() => {
+      router.push("/pages/login");
+    }, 3000);
+    return <div>Sessão não iniciada retornando para login</div>;
+  }
+
+  // Função de logout
+  const handleLogout = async () => {
+    // Enviar evento para o servidor informando que o usuário está saindo
+    const response = await api.put("/logout");
+    if (response.status === 200) {
+      // Limpar o cookie de sessão
+      setToenUsuario(null);
+      Cookies.remove("connect.sid");
+      router.push("/pages/login");
+      console.log("Logout bem-sucedido");
+    } else {
+      console.error("Erro ao fazer logout:", response.data.message);
+    }
+
+    socket.emit("userDisconnect", tokenUsuario._id);
+
+    // Desconectar do socket
+    disconnectSocket();
+
+    // Limpar os estados locais
+    setUserSelected(null);
+    setMessages([]);
+    setFormattedMessages([]);
+    setOnlineUsers({});
+    setUsers([]);
+    console.log("Usuário saiu do chat!");
+  };
 
   // Conectar ao socket e configurar eventos
   const initSocket = () => {
@@ -66,23 +102,41 @@ export default function Chat() {
 
   // Manipular mensagens recebidas
   const handleReceiveMessage = (message) => {
-    console.log("📥 Mensagem recebida:", message); // Loga a mensagem recebida
-    if (userSelected && message.sender === userSelected._id) {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { content: message.content, fromMe: false, timestamp: new Date() },
-      ]);
+    console.log("📥 Mensagem recebida:", message); // Verifique se a mensagem está sendo recebida
+
+    // Verifique se a mensagem é do usuário selecionado ou para o usuário selecionado
+    if (
+      userSelected &&
+      (message.sender === userSelected._id ||
+        message.recipientId === userSelected._id)
+    ) {
+      console.log("Mensagem adicionada ao estado", message);
+      // Prevenir duplicação de mensagens
+      setMessages((prevMessages) => {
+        // Verifica se a mensagem já existe antes de adicioná-la
+        const messageExists = prevMessages.some(
+          (msg) =>
+            msg.content === message.content &&
+            msg.timestamp === message.timestamp
+        );
+        if (messageExists) {
+          return prevMessages;
+        }
+        return [
+          ...prevMessages,
+          {
+            content: message.content,
+            fromMe: message.sender === tokenUsuario._id, // Verifique se a mensagem é do usuário
+            timestamp: new Date(message.timestamp),
+          },
+        ];
+      });
     }
-    // Atualiza a última mensagem para o usuário
-    setLastMessages((prevLastMessages) => ({
-      ...prevLastMessages,
-      [message.sender]: message.content,
-    }));
   };
 
   // Buscar mensagens ao selecionar um usuário
-  const fetchMessages = async (selectedUser) => {
-    console.log("🔄 Buscando mensagens de", selectedUser.nome);
+  const fetchMessages = async (selectedUser, tokenUsuario) => {
+    console.log("🔄 Buscando mensagens de", selectedUser.nome, tokenUsuario);
     socket.emit("fetchMessages", {
       sender: tokenUsuario._id,
       recipientId: selectedUser._id,
@@ -114,7 +168,7 @@ export default function Chat() {
   const handleSelectUser = (user) => {
     console.log("🔍 Usuário selecionado:", user.nome);
     setUserSelected(user);
-    fetchMessages(user);
+    fetchMessages(user, tokenUsuario);
   };
 
   // Atualiza mensagens formatadas sempre que mensagens mudarem
@@ -129,10 +183,10 @@ export default function Chat() {
   };
 
   // Formatar mensagens após carregar ou enviar
-  React.useEffect(() => formatMessages(), [messages]);
+  useEffect(() => formatMessages(), [messages]);
 
   // Inicializa o socket e carrega a lista de usuários ao montar o componente
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("👨‍💻 Inicializando o socket...");
     initSocket();
     return () => {
@@ -156,11 +210,7 @@ export default function Chat() {
                 {tokenUsuario && tokenUsuario.nome}
               </span>
             </div>
-            <div className="mb-4">
-              <Button onClick={() => socket.emit("getUsers")}>
-                Carregar usuários
-              </Button>
-            </div>
+
             <div className="space-y-3">
               {users.map(
                 (user) =>
@@ -213,6 +263,9 @@ export default function Chat() {
                   >
                     {onlineUsers[userSelected._id] ? "Online" : "Offline"}
                   </span>
+                  <Button onClick={handleLogout} color="error" size="sm">
+                    Sair
+                  </Button>
                 </div>
                 <div
                   className="h-[400px] overflow-y-auto"

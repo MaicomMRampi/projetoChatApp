@@ -12,6 +12,7 @@ const mensagenController = require('../controllers/mensagenController');
 // Rotas de Autenticação
 router.post('/api/login', autenticacaoController.login);
 router.get('/api/verificaSessao', autenticacaoController.verificaSessao);
+router.put('/api/logout', autenticacaoController.logout);
 
 
 // // Rotas de Usuário

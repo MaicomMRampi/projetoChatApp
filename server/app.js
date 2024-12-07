@@ -55,7 +55,6 @@ const io = require('socket.io')(server);  // Assumindo que você já tenha a ins
 
 // Evento de conexão de cliente
 io.on('connection', (socket) => {
-    console.log(`Novo cliente conectado: ${socket.id}`);
 
     // Evento de conexão de cliente
     io.on('connection', (socket) => {
@@ -129,19 +128,24 @@ io.on('connection', (socket) => {
 
 
         // Evento para buscar mensagens entre dois usuários
-        socket.on('fetchMessages', async ({ senderId, recipientId }) => {
+        socket.on('fetchMessages', async (data) => {
+            console.log("🚀 ~ socket.on ~ data", data)
+
             try {
                 const messages = await Message.find({
                     $or: [
-                        { sender: senderId, recipientId: recipientId },
-                        { sender: recipientId, recipientId: senderId },
+                        { sender: data.sender, recipientId: data.recipientId },
+                        { sender: data.recipientId, recipientId: data.sender },
                     ],
                 }).sort({ timestamp: 1 });
+                console.log("🚀 ~ socket.on ~ messages", messages)
                 socket.emit('fetchMessagesResponse', messages);
             } catch (error) {
                 console.error('Erro ao buscar mensagens:', error);
                 socket.emit('fetchMessagesError', { error: 'Erro ao buscar mensagens' });
             }
+
+
         });
 
         // Evento para notificar mudanças de status

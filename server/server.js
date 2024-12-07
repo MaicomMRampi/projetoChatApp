@@ -12,7 +12,6 @@ module.exports.listen = (server) => {
 
     // Iniciando o socket
     io.on('connection', (socket) => {
-        console.log('Novo cliente conectado: ' + socket.id);
 
         // Exemplo de evento de mensagem
         socket.on('chat_message', (data) => {

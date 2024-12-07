@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useRouter, usePathname } from "next/navigation";
 import { api } from "../../lib/api";
 
@@ -10,24 +9,25 @@ const AuthCheck = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
   useEffect(() => {
-    // Verifica se não está nas páginas de login ou registro
-
-    const checkAuth = async () => {
-      try {
-        const response = await api.get("/verificaSessao", {
-          withCredentials: true,
-        });
-        console.log("🚀 ~ checkAuth ~ response", response);
-        if (response.status === 200) {
-          setIsAuthenticated(true); // Usuário autenticado
+    // Verifica se a rota não é a de registro (/register)
+    if (pathname !== "/pages/register") {
+      const checkAuth = async () => {
+        try {
+          const response = await api.get("/verificaSessao", {
+            withCredentials: true,
+          });
+          console.log("🚀 ~ checkAuth ~ response", response);
+          if (response.status === 200) {
+            setIsAuthenticated(true); // Usuário autenticado
+          }
+        } catch (error) {
+          setIsAuthenticated(false); // Usuário não autenticado
+          router.push("/pages/login"); // Redireciona para a página de login
         }
-      } catch (error) {
-        setIsAuthenticated(false); // Usuário não autenticado
-        router.push("/pages/login"); // Redireciona para a página de login
-      }
-    };
+      };
 
-    checkAuth();
+      checkAuth();
+    }
   }, [router, pathname]); // Adicionando pathname e router como dependências
 
   if (isAuthenticated === null) {

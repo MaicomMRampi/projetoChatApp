@@ -27,6 +27,18 @@ const login = (req, res, next) => {
     })(req, res, next);
 };
 
+const logout = (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            return res.status(500).send("Erro ao realizar logout.");
+        }
+
+        // Se você estiver usando um cookie para manter a sessão:
+        res.clearCookie("connect.sid"); // Remove o cookie da sessão (substitua o nome, caso esteja usando outro)
+
+        res.send({ message: "Logout realizado com sucesso!" });
+    });
+}
 
 const verificaSessao = async (req, res) => {
     console.log('Sessão ativa:', req.isAuthenticated());
@@ -43,4 +55,4 @@ const verificaSessao = async (req, res) => {
 
 
 
-module.exports = { login, verificaSessao };
+module.exports = { login, verificaSessao, logout };
