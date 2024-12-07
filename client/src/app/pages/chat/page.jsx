@@ -66,6 +66,11 @@ export default function Chat() {
 
       // Ouvir eventos do servidor
       socket.on("userStatus", handleUserStatus); // Evento para status de usuário (online/offline)
+      socket.on("fetchMessagesResponse", (messages) => {
+        console.log("🚀 Resposta de mensagens recebidas:", messages);
+        // Aqui você pode atualizar o estado de mensagens, se necessário
+        setMessages(messages);
+      }); // Adicionando o evento de resposta de mensagens
       socket.on("receiveMessage", handleReceiveMessage); // Evento para receber mensagem
       socket.on("usersList", handleUsersList); // Evento para lista de usuários conectados
       socket.on("connect_error", (err) => {
