@@ -102,25 +102,31 @@ io.on('connection', (socket) => {
 
         // Evento para enviar mensagens
         socket.on('sendMessage', async (data) => {
-            console.log('Mensagem recebida:', data);
+            console.log('Mensagem recebida no servidor:', data);
+
             const newMessage = new Message({
                 sender: data.sender,
                 recipientId: data.recipientId,
                 content: data.content,
             });
+
             try {
-                await newMessage.save();
+                await newMessage.save(); // Salva a mensagem no banco de dados
+
+                // Notifica o destinatário em tempo real
                 io.to(data.recipientId).emit('receiveMessage', {
                     sender: data.sender,
                     recipientId: data.recipientId,
                     content: data.content,
                     timestamp: newMessage.timestamp,
                 });
-                console.log('Mensagem enviada com sucesso!');
+
+                console.log('Mensagem enviada para o destinatário:', data.recipientId);
             } catch (error) {
-                console.error('Erro ao salvar a mensagem:', error);
+                console.error('Erro ao salvar e enviar a mensagem:', error);
             }
         });
+
 
         // Evento para buscar mensagens entre dois usuários
         socket.on('fetchMessages', async ({ senderId, recipientId }) => {

@@ -12,6 +12,7 @@ const formatDateTime = (date) => {
 
 export default function Chat() {
   const { tokenUsuario } = sessaoUsuario();
+  const [lastMessages, setLastMessages] = useState({}); // Última mensagem por usuário
   const [users, setUsers] = useState([]); // Lista de usuários
   const [onlineUsers, setOnlineUsers] = useState({}); // Status online/offline dos usuários
   const [userSelected, setUserSelected] = useState(null);
@@ -72,6 +73,11 @@ export default function Chat() {
         { content: message.content, fromMe: false, timestamp: new Date() },
       ]);
     }
+    // Atualiza a última mensagem para o usuário
+    setLastMessages((prevLastMessages) => ({
+      ...prevLastMessages,
+      [message.sender]: message.content,
+    }));
   };
 
   // Buscar mensagens ao selecionar um usuário
